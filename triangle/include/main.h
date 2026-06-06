@@ -10,6 +10,8 @@
 
 struct vulkan_cfg {
   VkInstance *_inst;
+  VkPhysicalDevice *_phy;
+  VkDevice *_device;
   GLFWwindow *_window;
 
   const char **validationLayers;
