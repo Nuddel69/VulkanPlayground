@@ -47,9 +47,29 @@ static int initVulkan(struct vulkan_cfg *cfg) {
 
   printf("Initialising vulkan\n");
 
+  printf("Creating vulkan instance\n");
   status = createVulkanInstance(cfg);
-  status = pickPhysicalDevice(cfg);
+  if (status) {
+    fprintf(stderr, "Error during instance creation\n");
+    return status;
+  }
 
+  printf("Selecting physical device\n");
+  status = pickPhysicalDevice(cfg);
+  if (status) {
+    fprintf(stderr,
+            "Error during physical device querying, scoring or selection\n");
+    return status;
+  }
+
+  printf("Creating logical device\n");
+  status = createLogicalDevice(cfg);
+  if (status) {
+    fprintf(stderr, "Error during logical device creation\n");
+    return status;
+  }
+
+  printf("Successfully initialised vulkan!\n");
   return status;
 }
 
@@ -81,9 +101,11 @@ int run(struct vulkan_cfg *cfg) {
 
 int main(int argc, char *argv[]) {
   int status;
-  VkInstance inst;
 
-  struct vulkan_cfg cfg = {&inst, ._validationLayers = validationLayers, 1};
+  struct vulkan_cfg cfg = {0};
+
+  cfg._validationLayers = validationLayers;
+  cfg._validationLayers_n = 1;
 
   status = run(&cfg);
   if (status) {

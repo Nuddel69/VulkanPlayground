@@ -9,9 +9,11 @@
 #define WINDOW_WIDTH 800
 
 struct vulkan_cfg {
-  VkInstance *_inst;
-  VkPhysicalDevice *_phy;
-  VkDevice *_device;
+  VkPhysicalDevice _phy;
+  VkInstance _inst;
+  VkDevice _device;
+  VkQueue _graphicsQueue;
+
   GLFWwindow *_window;
 
   const char **_validationLayers;

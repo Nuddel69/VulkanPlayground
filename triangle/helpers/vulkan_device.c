@@ -11,12 +11,14 @@
 #include "main.h"
 
 int scoreDeviceSuitability(VkPhysicalDevice *dev) {
-  VkPhysicalDeviceProperties deviceProperties;
-  VkPhysicalDeviceFeatures deviceFeatures;
-  VkPhysicalDeviceFeatures2 deviceFeatures2;
-  VkPhysicalDeviceVulkan11Features deviceFeatures11;
-  VkPhysicalDeviceVulkan13Features deviceFeatures13;
-  VkPhysicalDeviceExtendedDynamicStateFeaturesEXT deviceEDSF;
+  int status;
+
+  VkPhysicalDeviceProperties deviceProperties = {0};
+  VkPhysicalDeviceFeatures deviceFeatures = {0};
+  VkPhysicalDeviceFeatures2 deviceFeatures2 = {0};
+  VkPhysicalDeviceVulkan11Features deviceFeatures11 = {0};
+  VkPhysicalDeviceVulkan13Features deviceFeatures13 = {0};
+  VkPhysicalDeviceExtendedDynamicStateFeaturesEXT deviceEDSF = {0};
 
   deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
   deviceFeatures2.pNext = &deviceFeatures11;
@@ -31,9 +33,13 @@ int scoreDeviceSuitability(VkPhysicalDevice *dev) {
 
   deviceEDSF.sType =
       VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT;
+  deviceEDSF.pNext = NULL;
 
+  printf("Querying device features...\n");
   vkGetPhysicalDeviceFeatures(*dev, &deviceFeatures);
   vkGetPhysicalDeviceFeatures2(*dev, &deviceFeatures2);
+
+  printf("Querying device properties...\n");
   vkGetPhysicalDeviceProperties(*dev, &deviceProperties);
 
   // Verify API version
@@ -47,6 +53,12 @@ int scoreDeviceSuitability(VkPhysicalDevice *dev) {
   VkQueueFamilyProperties deviceQueueFamilies[deviceQueueFamilies_n];
   vkGetPhysicalDeviceQueueFamilyProperties(*dev, &deviceQueueFamilies_n,
                                            deviceQueueFamilies);
+
+  if (!deviceQueueFamilies_n) {
+    fprintf(stderr, "error querying physical device queue families\n");
+    return -1;
+  }
+
   uint8_t queueMatch = false;
   for (size_t i = 0; i < deviceQueueFamilies_n; i++) {
     if (deviceQueueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
@@ -103,9 +115,19 @@ int pickPhysicalDevice(struct vulkan_cfg *cfg) {
 
   // List graphics cards
   printf("Querying physical device information...\n");
-  vkEnumeratePhysicalDevices(*cfg->_inst, &physicalDevices_n, NULL);
+  status = vkEnumeratePhysicalDevices(cfg->_inst, &physicalDevices_n, NULL);
+  if (status != VK_SUCCESS) {
+    fprintf(stderr, "failed to query physical device count\n");
+    return -1;
+  }
   VkPhysicalDevice physicalDevices[physicalDevices_n];
-  vkEnumeratePhysicalDevices(*cfg->_inst, &physicalDevices_n, physicalDevices);
+
+  status = vkEnumeratePhysicalDevices(cfg->_inst, &physicalDevices_n,
+                                      physicalDevices);
+  if (status != VK_SUCCESS) {
+    fprintf(stderr, "failed to query physical device list\n");
+    return -1;
+  }
 
   if (!physicalDevices_n) {
     fprintf(stderr, "found no GPUs with vulkan support\n");
@@ -116,16 +138,17 @@ int pickPhysicalDevice(struct vulkan_cfg *cfg) {
 
   // Verify compatibility and select first hit
 
-  int score, bestScore, deviceIndex = 0;
+  int8_t score, bestScore, deviceIndex = 0;
   cfg->_phy = NULL;
 
   for (size_t i = 0; i < physicalDevices_n; i++) {
     vkGetPhysicalDeviceProperties(physicalDevices[i], &properties);
     printf("Device (%zu): %s\n", i, properties.deviceName);
 
+    printf("Scoring device (%zu)...\n", i);
     score = scoreDeviceSuitability(&physicalDevices[i]);
     if (score > bestScore) {
-      cfg->_phy = &physicalDevices[i];
+      cfg->_phy = physicalDevices[i];
       bestScore = score;
       deviceIndex = i;
     }
@@ -138,6 +161,106 @@ int pickPhysicalDevice(struct vulkan_cfg *cfg) {
 
   printf("Selected physical device (%d) with score (%d)\n", deviceIndex,
          bestScore);
+
+  return 0;
+}
+
+int createLogicalDevice(struct vulkan_cfg *cfg) {
+  int status;
+  uint32_t deviceQueueFamilyProperties_n = 0;
+  float deviceQueuePriority = 0.5f;
+
+  // Consider adding VkPhysicalDeviceFeatures2 as a pointer argument instead of
+  // hard-coding them here...
+
+  VkPhysicalDeviceExtendedDynamicStateFeaturesEXT deviceFeaturesEDSF = {
+      .sType =
+          VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT,
+      .extendedDynamicState = true,
+  };
+
+  VkPhysicalDeviceVulkan13Features deviceFeatures13 = {
+      .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES,
+      .dynamicRendering = true,
+      .pNext = &deviceFeaturesEDSF,
+  };
+
+  VkPhysicalDeviceVulkan11Features deviceFeatures11 = {
+      .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES,
+      .shaderDrawParameters = true,
+      .pNext = &deviceFeatures13,
+  };
+
+  VkPhysicalDeviceFeatures2 deviceFeatures2 = {
+      .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
+      .pNext = &deviceFeatures11,
+  };
+
+  VkPhysicalDeviceFeatures deviceFeatures = {0};
+
+  vkGetPhysicalDeviceQueueFamilyProperties(
+      cfg->_phy, &deviceQueueFamilyProperties_n, NULL);
+  VkQueueFamilyProperties
+      deviceQueueFamilyProperties[deviceQueueFamilyProperties_n];
+  vkGetPhysicalDeviceQueueFamilyProperties(
+      cfg->_phy, &deviceQueueFamilyProperties_n, deviceQueueFamilyProperties);
+
+  uint32_t deviceQueueGraphicsIndex, graphicsQueueMatch = 0;
+
+  printf("Detected %d queue families\n", deviceQueueFamilyProperties_n);
+  for (size_t i = 0; i < deviceQueueFamilyProperties_n; i++) {
+    if (deviceQueueFamilyProperties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+      deviceQueueGraphicsIndex = i;
+      graphicsQueueMatch = true;
+      break;
+    }
+  }
+
+  if (!graphicsQueueMatch) {
+    fprintf(stderr, "No valid queue families found\n");
+    return -1;
+  }
+
+  const char *requiredDeviceExtensions[] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+  uint32_t requiredDeviceExtensions_n = 1;
+
+  VkDeviceQueueCreateInfo deviceQueueCreateInfo = {
+      VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+      NULL,
+      0,
+      deviceQueueGraphicsIndex,
+      1,
+      &deviceQueuePriority};
+
+  VkDeviceCreateInfo deviceCreateInfo = {VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+                                         &deviceFeatures2,
+                                         0, // Reserved for future use
+                                         1,
+                                         &deviceQueueCreateInfo,
+                                         0,    // Deprecated
+                                         NULL, // Deprecated
+                                         requiredDeviceExtensions_n,
+                                         requiredDeviceExtensions,
+                                         NULL};
+
+  if (!cfg->_phy || !cfg->_inst) {
+  }
+  printf("Creating logical device\n");
+
+  status = vkCreateDevice(cfg->_phy, &deviceCreateInfo, NULL, &cfg->_device);
+
+  if (status != VK_SUCCESS) {
+    fprintf(stderr, "error creating logical device\n");
+    return -1;
+  }
+
+  vkGetDeviceQueue(cfg->_device, deviceQueueGraphicsIndex, 0,
+                   &cfg->_graphicsQueue);
+
+  if (!cfg->_graphicsQueue) {
+    fprintf(stderr, "error retreiving device queue\n");
+    return -1;
+  }
 
   return 0;
 }

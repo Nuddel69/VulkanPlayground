@@ -7,5 +7,6 @@
 
 int scoreDeviceSuitability(VkPhysicalDevice *dev);
 int pickPhysicalDevice(struct vulkan_cfg *cfg);
+int createLogicalDevice(struct vulkan_cfg *cfg);
 
 #endif // INCLUDEhelpersvulkan_devicevulkan_device_h_

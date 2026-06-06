@@ -143,7 +143,7 @@ int createVulkanInstance(struct vulkan_cfg *cfg) {
       requiredExtensions_n,
       requiredExtensions};
 
-  status = vkCreateInstance(&_instance_info, NULL, cfg->_inst);
+  status = vkCreateInstance(&_instance_info, NULL, &cfg->_inst);
 
   if (status != VK_SUCCESS) {
     fprintf(stderr, "failed to create instance!");
