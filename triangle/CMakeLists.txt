@@ -2,12 +2,15 @@ cmake_minimum_required(VERSION 3.29)
 
 set(PROJECT_NAME "TriangleApp")
 set(CFLAGS_RELEASE "-DRELEASE_BUILD")
-set(CMAKE_EXPORT_COMPILE_COMMANDS OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 project(${PROJECT_NAME})
 
 add_executable(${PROJECT_NAME}
     main.c
+)
+target_include_directories(${PROJECT_NAME} PUBLIC
+    "${CMAKE_SOURCE_DIR}/include"
 )
 
 find_package(Vulkan REQUIRED)
@@ -21,7 +24,6 @@ endif()
 
 add_subdirectory(helpers)
 
-target_include_directories(${PROJECT_NAME} PUBLIC include)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
     C_STANDARD 11

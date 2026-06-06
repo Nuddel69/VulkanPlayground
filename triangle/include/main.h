@@ -14,8 +14,8 @@ struct vulkan_cfg {
   VkDevice *_device;
   GLFWwindow *_window;
 
-  const char **validationLayers;
-  uint32_t validationLayers_n;
+  const char **_validationLayers;
+  uint32_t _validationLayers_n;
 };
 
 #endif // INCLUDEincludemainmainh_

@@ -1,0 +1,11 @@
+#ifndef INCLUDEhelpersvulkan_devicevulkan_device_h_
+#define INCLUDEhelpersvulkan_devicevulkan_device_h_
+
+#include <vulkan/vulkan_core.h>
+
+#include "main.h"
+
+int scoreDeviceSuitability(VkPhysicalDevice *dev);
+int pickPhysicalDevice(struct vulkan_cfg *cfg);
+
+#endif // INCLUDEhelpersvulkan_devicevulkan_device_h_
