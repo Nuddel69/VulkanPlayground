@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.29)
 
 set(PROJECT_NAME "TriangleApp")
+set(CFLAGS "-Wall")
 set(CFLAGS_RELEASE "-DRELEASE_BUILD")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -12,6 +13,8 @@ add_executable(${PROJECT_NAME}
 target_include_directories(${PROJECT_NAME} PUBLIC
     "${CMAKE_SOURCE_DIR}/include"
 )
+
+target_compile_options(${PROJECT_NAME} PUBLIC ${CFLAGS})
 
 find_package(Vulkan REQUIRED)
 find_package(glfw3 REQUIRED)

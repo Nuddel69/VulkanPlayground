@@ -15,25 +15,24 @@ int scoreDeviceSuitability(VkPhysicalDevice *dev) {
 
   VkPhysicalDeviceProperties deviceProperties = {0};
   VkPhysicalDeviceFeatures deviceFeatures = {0};
-  VkPhysicalDeviceFeatures2 deviceFeatures2 = {0};
-  VkPhysicalDeviceVulkan11Features deviceFeatures11 = {0};
-  VkPhysicalDeviceVulkan13Features deviceFeatures13 = {0};
-  VkPhysicalDeviceExtendedDynamicStateFeaturesEXT deviceEDSF = {0};
 
-  deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-  deviceFeatures2.pNext = &deviceFeatures11;
-
-  deviceFeatures11.sType =
-      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
-  deviceFeatures11.pNext = &deviceFeatures13;
-
-  deviceFeatures13.sType =
-      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
-  deviceFeatures13.pNext = &deviceEDSF;
-
-  deviceEDSF.sType =
-      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT;
-  deviceEDSF.pNext = NULL;
+  VkPhysicalDeviceExtendedDynamicStateFeaturesEXT deviceEDSF = {
+      .sType =
+          VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT,
+      .pNext = NULL,
+  };
+  VkPhysicalDeviceVulkan13Features deviceFeatures13 = {
+      .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES,
+      .pNext = &deviceEDSF,
+  };
+  VkPhysicalDeviceVulkan11Features deviceFeatures11 = {
+      .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES,
+      .pNext = &deviceFeatures13,
+  };
+  VkPhysicalDeviceFeatures2 deviceFeatures2 = {
+      .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
+      .pNext = &deviceFeatures11,
+  };
 
   printf("Querying device features...\n");
   vkGetPhysicalDeviceFeatures(*dev, &deviceFeatures);
@@ -44,6 +43,7 @@ int scoreDeviceSuitability(VkPhysicalDevice *dev) {
 
   // Verify API version
   if (!(deviceProperties.apiVersion >= VK_API_VERSION_1_3)) {
+    printf("device: incompatible api version\n");
     return 0;
   }
 
@@ -68,6 +68,7 @@ int scoreDeviceSuitability(VkPhysicalDevice *dev) {
   }
 
   if (!queueMatch) {
+    printf("device: missing required queue families\n");
     return 0;
   }
 
@@ -92,6 +93,7 @@ int scoreDeviceSuitability(VkPhysicalDevice *dev) {
       }
     }
     if (!match) {
+      printf("device: Missing required extensions\n");
       return 0;
     }
   }
@@ -99,6 +101,7 @@ int scoreDeviceSuitability(VkPhysicalDevice *dev) {
   // Verify all required device features are supported
   if (!(deviceFeatures11.shaderDrawParameters &&
         deviceFeatures13.dynamicRendering && deviceEDSF.extendedDynamicState)) {
+    printf("device: Missing required features\n");
     return 0;
   }
 
@@ -138,7 +141,10 @@ int pickPhysicalDevice(struct vulkan_cfg *cfg) {
 
   // Verify compatibility and select first hit
 
-  int8_t score, bestScore, deviceIndex = 0;
+  int8_t score = 0;
+  int8_t bestScore = 0;
+  int8_t deviceIndex = 0;
+
   cfg->_phy = NULL;
 
   for (size_t i = 0; i < physicalDevices_n; i++) {
@@ -208,8 +214,14 @@ int createLogicalDevice(struct vulkan_cfg *cfg) {
   uint32_t deviceQueueGraphicsIndex, graphicsQueueMatch = 0;
 
   printf("Detected %d queue families\n", deviceQueueFamilyProperties_n);
+  VkBool32 surfaceSupportKHR = 0;
   for (size_t i = 0; i < deviceQueueFamilyProperties_n; i++) {
-    if (deviceQueueFamilyProperties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+
+    vkGetPhysicalDeviceSurfaceSupportKHR(cfg->_phy, i, cfg->_surface,
+                                         &surfaceSupportKHR);
+
+    if ((deviceQueueFamilyProperties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) &&
+        (surfaceSupportKHR)) {
       deviceQueueGraphicsIndex = i;
       graphicsQueueMatch = true;
       break;

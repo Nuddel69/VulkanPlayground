@@ -12,6 +12,7 @@
 
 #include "helpers/vulkan_device.h"
 #include "helpers/vulkan_instance.h"
+#include "helpers/window.h"
 
 #include "include/main.h"
 
@@ -28,16 +29,11 @@ static int initWindow(struct vulkan_cfg *cfg) {
     return status; // Find a fitting errno
   }
 
-  glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-  glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-
-  GLFWwindow *window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT,
-                                        "Vulkan Triangle", NULL, NULL);
-  if (NULL == window) {
-    fprintf(stderr, "failed to create window\n");
-    return -1; // Find a fitting errno
+  status = createWindow(cfg);
+  if (status) {
+    fprintf(stderr, "failed to create window (status %d)\n", status);
+    return -1;
   }
-  cfg->_window = window;
 
   return 0;
 }
@@ -45,16 +41,23 @@ static int initWindow(struct vulkan_cfg *cfg) {
 static int initVulkan(struct vulkan_cfg *cfg) {
   int status;
 
-  printf("Initialising vulkan\n");
+  printf("\nInitialising vulkan\n");
 
-  printf("Creating vulkan instance\n");
+  printf("\n--- Creating vulkan instance ---\n");
   status = createVulkanInstance(cfg);
   if (status) {
     fprintf(stderr, "Error during instance creation\n");
     return status;
   }
 
-  printf("Selecting physical device\n");
+  printf("\n--- Creating vulkan surface ---\n");
+  status = createSurface(cfg);
+  if (status) {
+    fprintf(stderr, "encountered an error creating surface\n");
+    return status;
+  }
+
+  printf("\n--- Selecting physical device ---\n");
   status = pickPhysicalDevice(cfg);
   if (status) {
     fprintf(stderr,
@@ -62,14 +65,28 @@ static int initVulkan(struct vulkan_cfg *cfg) {
     return status;
   }
 
-  printf("Creating logical device\n");
+  printf("\n--- Creating logical device ---\n");
   status = createLogicalDevice(cfg);
   if (status) {
     fprintf(stderr, "Error during logical device creation\n");
     return status;
   }
 
-  printf("Successfully initialised vulkan!\n");
+  printf("\n--- Creating swapchain ---\n");
+  status = createSwapchain(cfg);
+  if (status) {
+    fprintf(stderr, "Error during swapchain creation\n");
+    return status;
+  }
+
+  printf("\n--- Creating image views ---\n");
+  status = createImageViews(cfg);
+  if (status) {
+    fprintf(stderr, "Unable to create image views\n");
+    return status;
+  }
+
+  printf("\nSuccessfully initialised vulkan!\n");
   return status;
 }
 
@@ -89,7 +106,7 @@ static int cleanup(struct vulkan_cfg *cfg) {
   return 0;
 }
 
-int run(struct vulkan_cfg *cfg) {
+static int run(struct vulkan_cfg *cfg) {
 
   initWindow(cfg);
 
