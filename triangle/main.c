@@ -1,3 +1,4 @@
+#include "helpers/graphics.h"
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -83,6 +84,13 @@ static int initVulkan(struct vulkan_cfg *cfg) {
   status = createImageViews(cfg);
   if (status) {
     fprintf(stderr, "Unable to create image views\n");
+    return status;
+  }
+
+  printf("\n--- Creating graphics pipeline ---\n");
+  status = createGraphicsPipeline(cfg);
+  if (status) {
+    fprintf(stderr, "Failed to create graphics pipeline\n");
     return status;
   }
 

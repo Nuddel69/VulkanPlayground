@@ -27,6 +27,8 @@ struct vulkan_cfg {
   VkExtent2D _swapchainExtent;
   VkImageView *_swapchainImageViews;
   uint32_t _swapchainImageViews_n;
+  VkPipelineLayout _pipelineLayout;
+  VkPipeline _pipeline;
 
   // Window stuff
   GLFWwindow *_window;
