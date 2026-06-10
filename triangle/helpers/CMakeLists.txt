@@ -3,4 +3,5 @@ target_sources(${PROJECT_NAME} PUBLIC
   vulkan_device.c
   window.c
   graphics.c
+  render.c
 )

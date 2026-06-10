@@ -1,4 +1,3 @@
-#include "helpers/graphics.h"
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -11,6 +10,8 @@
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan_core.h>
 
+#include "helpers/graphics.h"
+#include "helpers/render.h"
 #include "helpers/vulkan_device.h"
 #include "helpers/vulkan_instance.h"
 #include "helpers/window.h"
@@ -91,6 +92,20 @@ static int initVulkan(struct vulkan_cfg *cfg) {
   status = createGraphicsPipeline(cfg);
   if (status) {
     fprintf(stderr, "Failed to create graphics pipeline\n");
+    return status;
+  }
+
+  printf("\n--- Creating the command pool ---\n");
+  status = createCommandPool(cfg);
+  if (status) {
+    fprintf(stderr, "Failed to create the command pool\n");
+    return status;
+  }
+
+  printf("\n--- Allocating the command buffer ---\n");
+  status = createCommandBuffer(cfg);
+  if (status) {
+    fprintf(stderr, "Failed to allocate the command buffer\n");
     return status;
   }
 

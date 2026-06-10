@@ -274,5 +274,7 @@ int createLogicalDevice(struct vulkan_cfg *cfg) {
     return -1;
   }
 
+  cfg->_graphicsQueueIndex = deviceQueueGraphicsIndex;
+
   return 0;
 }

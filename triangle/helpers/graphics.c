@@ -1,9 +1,10 @@
-#include "helpers/graphics.h"
-#include "main.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
+
+#include "helpers/graphics.h"
+#include "main.h"
 
 /*
  * Reads and stores the contents of a file. Returns a pointer to the buffer and

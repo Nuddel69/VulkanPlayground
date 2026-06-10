@@ -14,11 +14,9 @@ struct vulkan_cfg {
   VkInstance _inst;
   VkDevice _device;
   VkQueue _graphicsQueue;
+  uint32_t _graphicsQueueIndex;
   VkSurfaceKHR _surface;
   VkSwapchainKHR _swapchain;
-
-  const char **_validationLayers;
-  uint32_t _validationLayers_n;
 
   // Rendering stuff
   VkImage *_swapchainImages;
@@ -29,9 +27,15 @@ struct vulkan_cfg {
   uint32_t _swapchainImageViews_n;
   VkPipelineLayout _pipelineLayout;
   VkPipeline _pipeline;
+  VkCommandPool _cmd_pool;
+  VkCommandBuffer _cmd_buffer;
 
   // Window stuff
   GLFWwindow *_window;
+
+  // Vulkan stuff
+  const char **_validationLayers;
+  uint32_t _validationLayers_n;
 };
 
 #endif // INCLUDEincludemainmainh_
