@@ -43,7 +43,7 @@ const char **getRequiredInstanceExtensions(struct vulkan_cfg *cfg,
 }
 
 int createVulkanInstance(struct vulkan_cfg *cfg) {
-  int status;
+  VkResult status;
 
   const struct VkApplicationInfo _app_info = {
       VK_STRUCTURE_TYPE_APPLICATION_INFO,

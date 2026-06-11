@@ -5,7 +5,6 @@
 
 #include "main.h"
 
-int scoreDeviceSuitability(VkPhysicalDevice *dev);
 int pickPhysicalDevice(struct vulkan_cfg *cfg);
 int createLogicalDevice(struct vulkan_cfg *cfg);
 

@@ -87,8 +87,6 @@ chooseMinImageCount(const VkSurfaceCapabilitiesKHR *capabilities) {
 }
 
 int createWindow(struct vulkan_cfg *cfg) {
-  int status;
-
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
   glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
@@ -116,7 +114,7 @@ int createSurface(struct vulkan_cfg *cfg) {
 }
 
 int createSwapchain(struct vulkan_cfg *cfg) {
-  int status;
+  VkResult status;
 
   VkSurfaceCapabilitiesKHR surfaceCapabilities;
   status = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(cfg->_phy, cfg->_surface,
@@ -211,7 +209,7 @@ int createSwapchain(struct vulkan_cfg *cfg) {
 }
 
 int createImageViews(struct vulkan_cfg *cfg) {
-  int status;
+  VkResult status;
 
   struct VkImageViewCreateInfo imageViewCreateInfo = {
       .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,

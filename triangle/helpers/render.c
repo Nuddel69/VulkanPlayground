@@ -101,14 +101,14 @@ int recordCommandBuffer(struct vulkan_cfg *cfg, uint32_t imageIndex) {
       .pInheritanceInfo = NULL,
   };
 
-  printf("Starting command buffer\n");
+  // printf("Starting command buffer\n");
   status = vkBeginCommandBuffer(cfg->_cmd_buffer, &beginInfo);
 
   if (status != VK_SUCCESS) {
     return -1;
   }
 
-  printf("Transitioning image layout to render\n");
+  // printf("Transitioning image layout to render\n");
   transitionImageLayout(cfg, imageIndex, VK_IMAGE_LAYOUT_UNDEFINED,
                         VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, 0,
                         VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
@@ -139,10 +139,10 @@ int recordCommandBuffer(struct vulkan_cfg *cfg, uint32_t imageIndex) {
       .colorAttachmentCount = 1,
   };
 
-  printf("Starting rendering\n");
+  // printf("Starting rendering\n");
   vkCmdBeginRendering(cfg->_cmd_buffer, &renderingInfo);
 
-  printf("Binding pipeline\n");
+  // printf("Binding pipeline\n");
   vkCmdBindPipeline(cfg->_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                     cfg->_pipeline);
 
@@ -155,26 +155,26 @@ int recordCommandBuffer(struct vulkan_cfg *cfg, uint32_t imageIndex) {
       1.0f,
   };
 
-  printf("Configuring viewport\n");
+  // printf("Configuring viewport\n");
   vkCmdSetViewport(cfg->_cmd_buffer, 0, 1, &_vp);
-  printf("Configuring scissor\n");
+  // printf("Configuring scissor\n");
   vkCmdSetScissor(cfg->_cmd_buffer, 0, 1,
                   &(VkRect2D){{0, 0}, cfg->_swapchainExtent});
 
-  printf("Drawing\n");
+  // printf("Drawing\n");
   vkCmdDraw(cfg->_cmd_buffer, 3, 1, 0, 0);
 
-  printf("Ending rendering\n");
+  // printf("Ending rendering\n");
   vkCmdEndRendering(cfg->_cmd_buffer);
 
-  printf("Transitioning image layout to present\n");
+  // printf("Transitioning image layout to present\n");
   transitionImageLayout(
       cfg, imageIndex, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
       VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
       0, VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
       VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT);
 
-  printf("Closing command buffer\n");
+  // printf("Closing command buffer\n");
   vkEndCommandBuffer(cfg->_cmd_buffer);
 
   return 0;

@@ -25,7 +25,7 @@ const char *validationLayers[] = {"VK_LAYER_KHRONOS_validation"};
 static int drawFrame(struct vulkan_cfg *cfg) {
   VkResult status;
 
-  printf("Drawing frame!\n");
+  // printf("Drawing frame!\n");
 
   status =
       vkWaitForFences(cfg->_device, 1, &cfg->fenceDraw, VK_TRUE, UINT64_MAX);
@@ -34,7 +34,7 @@ static int drawFrame(struct vulkan_cfg *cfg) {
     return -1;
   }
 
-  printf("Resetting fence\n");
+  // printf("Resetting fence\n");
   status = vkResetFences(cfg->_device, 1, &cfg->fenceDraw);
   if (status != VK_SUCCESS) {
     fprintf(stderr, "Couldn't reset fence\n");
@@ -45,7 +45,7 @@ static int drawFrame(struct vulkan_cfg *cfg) {
   status = vkAcquireNextImageKHR(cfg->_device, cfg->_swapchain, UINT64_MAX,
                                  cfg->semPresentComplete, NULL, &imageIndex);
 
-  printf("Recording command buffer!\n");
+  // printf("Recording command buffer!\n");
   status = recordCommandBuffer(cfg, imageIndex);
   if (status) {
     fprintf(stderr, "Error recording command buffer\n");
@@ -67,7 +67,7 @@ static int drawFrame(struct vulkan_cfg *cfg) {
       .pSignalSemaphores = &cfg->semRenderFinished,
   };
 
-  printf("Submitting rendering job!\n");
+  // printf("Submitting rendering job!\n");
   status = vkQueueSubmit(cfg->_graphicsQueue, 1, &submitInfo, cfg->fenceDraw);
   if (status != VK_SUCCESS) {
     fprintf(stderr, "Failed to submit buffer to queue\n");
@@ -75,8 +75,8 @@ static int drawFrame(struct vulkan_cfg *cfg) {
   }
 
   const VkPresentInfoKHR presentInfoKHR = {
-      .sType = 0,
-      .pNext = 0,
+      .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+      .pNext = NULL,
 
       .waitSemaphoreCount = 1,
       .pWaitSemaphores = &cfg->semRenderFinished,
@@ -86,7 +86,7 @@ static int drawFrame(struct vulkan_cfg *cfg) {
       .pResults = NULL,
   };
 
-  printf("Presenting frame!\n");
+  // printf("Presenting frame!\n");
   status = vkQueuePresentKHR(cfg->_graphicsQueue, &presentInfoKHR);
   if (status != VK_SUCCESS) {
     fprintf(stderr, "Failed to present image\n");

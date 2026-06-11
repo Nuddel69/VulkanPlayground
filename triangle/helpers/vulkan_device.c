@@ -10,7 +10,7 @@
 #include "helpers/vulkan_device.h"
 #include "main.h"
 
-int scoreDeviceSuitability(VkPhysicalDevice *dev) {
+static int scoreDeviceSuitability(VkPhysicalDevice *dev) {
   int status;
 
   VkPhysicalDeviceProperties deviceProperties = {0};
@@ -111,7 +111,7 @@ int scoreDeviceSuitability(VkPhysicalDevice *dev) {
 }
 
 int pickPhysicalDevice(struct vulkan_cfg *cfg) {
-  int status;
+  VkResult status;
 
   uint32_t physicalDevices_n = 0;
   VkPhysicalDeviceProperties properties;
@@ -172,7 +172,7 @@ int pickPhysicalDevice(struct vulkan_cfg *cfg) {
 }
 
 int createLogicalDevice(struct vulkan_cfg *cfg) {
-  int status;
+  VkResult status;
   uint32_t deviceQueueFamilyProperties_n = 0;
   float deviceQueuePriority = 0.5f;
 
