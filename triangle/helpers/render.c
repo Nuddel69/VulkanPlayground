@@ -13,6 +13,9 @@ static void transitionImageLayout(struct vulkan_cfg *cfg, uint32_t imageIndex,
                                   VkPipelineStageFlags2 src_stage_mask,
                                   VkPipelineStageFlags2 dst_stage_mask) {
   VkImageMemoryBarrier2 barrier = {
+      .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+      .pNext = NULL,
+
       .srcStageMask = src_stage_mask,
       .srcAccessMask = src_access_mask,
       .dstStageMask = dst_stage_mask,
@@ -22,11 +25,15 @@ static void transitionImageLayout(struct vulkan_cfg *cfg, uint32_t imageIndex,
       .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
       .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
       .image = cfg->_swapchainImages[imageIndex],
-      .subresourceRange = {.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-                           .baseMipLevel = 0,
-                           .levelCount = 1,
-                           .baseArrayLayer = 0,
-                           .layerCount = 1}};
+      .subresourceRange =
+          {
+              .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+              .baseMipLevel = 0,
+              .levelCount = 1,
+              .baseArrayLayer = 0,
+              .layerCount = 1,
+          },
+  };
 
   VkDependencyInfo dependencyInfo = {
       .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
@@ -85,7 +92,6 @@ int createCommandBuffer(struct vulkan_cfg *cfg) {
 
 int recordCommandBuffer(struct vulkan_cfg *cfg, uint32_t imageIndex) {
   VkResult status;
-  VkCommandBuffer cmd = cfg->_cmd_buffer;
 
   VkCommandBufferBeginInfo beginInfo = {
       .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
@@ -95,12 +101,14 @@ int recordCommandBuffer(struct vulkan_cfg *cfg, uint32_t imageIndex) {
       .pInheritanceInfo = NULL,
   };
 
-  status = vkBeginCommandBuffer(cmd, &beginInfo);
+  printf("Starting command buffer\n");
+  status = vkBeginCommandBuffer(cfg->_cmd_buffer, &beginInfo);
 
   if (status != VK_SUCCESS) {
     return -1;
   }
 
+  printf("Transitioning image layout to render\n");
   transitionImageLayout(cfg, imageIndex, VK_IMAGE_LAYOUT_UNDEFINED,
                         VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, 0,
                         VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
@@ -131,9 +139,12 @@ int recordCommandBuffer(struct vulkan_cfg *cfg, uint32_t imageIndex) {
       .colorAttachmentCount = 1,
   };
 
-  vkCmdBeginRendering(cmd, &renderingInfo);
+  printf("Starting rendering\n");
+  vkCmdBeginRendering(cfg->_cmd_buffer, &renderingInfo);
 
-  vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, cfg->_pipeline);
+  printf("Binding pipeline\n");
+  vkCmdBindPipeline(cfg->_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                    cfg->_pipeline);
 
   VkViewport _vp = {
       0.0f,
@@ -144,20 +155,27 @@ int recordCommandBuffer(struct vulkan_cfg *cfg, uint32_t imageIndex) {
       1.0f,
   };
 
-  vkCmdSetViewport(cmd, 0, 1, &_vp);
-  vkCmdSetScissor(cmd, 0, 1, &(VkRect2D){{0, 0}, cfg->_swapchainExtent});
+  printf("Configuring viewport\n");
+  vkCmdSetViewport(cfg->_cmd_buffer, 0, 1, &_vp);
+  printf("Configuring scissor\n");
+  vkCmdSetScissor(cfg->_cmd_buffer, 0, 1,
+                  &(VkRect2D){{0, 0}, cfg->_swapchainExtent});
 
-  vkCmdDraw(cmd, 3, 1, 0, 0);
+  printf("Drawing\n");
+  vkCmdDraw(cfg->_cmd_buffer, 3, 1, 0, 0);
 
-  vkCmdEndRendering(cmd);
+  printf("Ending rendering\n");
+  vkCmdEndRendering(cfg->_cmd_buffer);
 
+  printf("Transitioning image layout to present\n");
   transitionImageLayout(
       cfg, imageIndex, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
       VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
       0, VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
       VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT);
 
-  vkEndCommandBuffer(cmd);
+  printf("Closing command buffer\n");
+  vkEndCommandBuffer(cfg->_cmd_buffer);
 
   return 0;
 }

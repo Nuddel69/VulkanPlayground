@@ -202,6 +202,8 @@ int createLogicalDevice(struct vulkan_cfg *cfg) {
       .pNext = &deviceFeatures11,
   };
 
+  VkPhysicalDeviceSynchronization2Features syncFeatures = {0};
+
   VkPhysicalDeviceFeatures deviceFeatures = {0};
 
   vkGetPhysicalDeviceQueueFamilyProperties(

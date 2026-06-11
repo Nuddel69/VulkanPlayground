@@ -4,4 +4,5 @@ target_sources(${PROJECT_NAME} PUBLIC
   window.c
   graphics.c
   render.c
+  sync.c
 )

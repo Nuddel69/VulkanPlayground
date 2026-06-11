@@ -82,6 +82,7 @@ chooseMinImageCount(const VkSurfaceCapabilitiesKHR *capabilities) {
     minImageCount = capabilities->maxImageCount;
   }
 
+  printf("Minimum image count: (%d)", minImageCount);
   return minImageCount;
 }
 
@@ -223,10 +224,14 @@ int createImageViews(struct vulkan_cfg *cfg) {
           VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY,
           VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY}};
 
+  printf("Allocating (%d) image views\n", cfg->_swapchainImages_n);
   cfg->_swapchainImageViews =
       malloc(cfg->_swapchainImages_n * sizeof(VkImageView));
 
-  for (size_t i = 0; i < cfg->_swapchainImageViews_n; i++) {
+  cfg->_swapchainImageViews_n = cfg->_swapchainImages_n;
+
+  for (size_t i = 0; i < cfg->_swapchainImages_n; i++) {
+    printf("Creating image view %zu\n", i);
     imageViewCreateInfo.image = cfg->_swapchainImages[i];
 
     status = vkCreateImageView(cfg->_device, &imageViewCreateInfo, NULL,

@@ -33,6 +33,11 @@ struct vulkan_cfg {
   // Window stuff
   GLFWwindow *_window;
 
+  // Synchronization
+  VkSemaphore semPresentComplete;
+  VkSemaphore semRenderFinished;
+  VkFence fenceDraw;
+
   // Vulkan stuff
   const char **_validationLayers;
   uint32_t _validationLayers_n;
